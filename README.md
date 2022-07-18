@@ -7,6 +7,7 @@ See some example traces in [](./src/traces/tfdbi/).
 
 For more info, see:
 - https://medium.com/@thealexvarga/transfinite-meta-posting-c57f10d40975
+- https://medium.com/@thealexvarga/transfinite-meta-programming-a068a38cbdca
 
 # TODO
 
