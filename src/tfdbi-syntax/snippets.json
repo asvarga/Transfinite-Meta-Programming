@@ -1,0 +1,25 @@
+{
+	"Lambda": { "prefix": "l", "body": ["λ"]},
+	"Omega":  { "prefix": "w", "body": ["ω"]},
+	"Super0": { "prefix": ["w0", "ω0"], "body": ["ω⁰"]},
+	"Super1": { "prefix": ["w1", "ω1"], "body": ["ω¹"]},
+	"Super2": { "prefix": ["w2", "ω2"], "body": ["ω²"]},
+	"Super3": { "prefix": ["w3", "ω3"], "body": ["ω³"]},
+	"Super4": { "prefix": ["w4", "ω4"], "body": ["ω⁴"]},
+	"Super5": { "prefix": ["w5", "ω5"], "body": ["ω⁵"]},
+	"Super6": { "prefix": ["w6", "ω6"], "body": ["ω⁶"]},
+	"Super7": { "prefix": ["w7", "ω7"], "body": ["ω⁷"]},
+	"Super8": { "prefix": ["w8", "ω8"], "body": ["ω⁸"]},
+	"Super9": { "prefix": ["w9", "ω9"], "body": ["ω⁹"]}
+}
+
+
+
+
+
+
+
+
+
+
+

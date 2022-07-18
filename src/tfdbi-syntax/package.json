@@ -1,0 +1,32 @@
+{
+    "name": "tfdbi-syntax",
+    "displayName": "TFDBI_Syntax",
+    "description": "",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.65.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Snippets"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "tfdbi",
+            "aliases": ["TFDBI", "tfdbi"],
+            "extensions": [".tfdbi"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "tfdbi",
+            "scopeName": "source.tfdbi",
+            "path": "./syntaxes/tfdbi.tmLanguage.json"
+        }],
+        "snippets": [
+            {
+                "language": "tfdbi",
+                "path": "./snippets.json"
+            }
+        ]
+    }
+}

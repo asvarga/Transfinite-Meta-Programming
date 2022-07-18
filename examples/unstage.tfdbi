@@ -1,0 +1,27 @@
+
+
+/* a staged power function */
+$powCode := [ω²]λ.λ.(v ? `(,v1*,(f (v-1))) : '1)
+
+/* code generating 2^3 */
+$staged := ([%ω²]$powCode '2 3)
+
+/* running 2^3 */
+%$staged
+
+/* an unstaging function */
+$unstage := ( λ[`ω²]`[,ω²]v~[`ω²][,ω²](f1 v)
+            | λ[`ω²]'[,ω²]v~[`ω²][,ω²](f1 v)
+            | λ[`ω²],[,ω²]v~[`ω²][,ω²](f1 v)
+            | λ[`ω²]λ.[,ω²]v~[`ω²]λ.[,ω²](f1 v)
+            | λ[`ω²]([,ω²]v ? [,ω²]v1 : [,ω²]v2)~[`ω²]([,ω²](f3 v) ? [,ω²](f3 v1) : [,ω²](f3 v2))
+            | λ[`ω²]([,ω²]v * [,ω²]v1)~[`ω²]([,ω²](f2 v) * [,ω²](f2 v1))
+            | λ.v
+            )
+
+/* unstaging the power function */
+$unstagedPow := [%ω²]($unstage $powCode)
+
+/* running the unstaged power function */
+($unstagedPow 2 3)
+

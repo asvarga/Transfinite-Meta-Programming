@@ -1,0 +1,2 @@
+$double := λ.(v+v)
+($double 5)

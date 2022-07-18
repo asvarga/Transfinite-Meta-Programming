@@ -1,0 +1,82 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "TFDBI",
+	"patterns": [
+		{
+			"include": "#comment"
+		},
+		{
+			"include": "#string"
+		},
+		{
+			"include": "#keyword"
+		},
+		{
+			"include": "#variable"
+		},
+		{
+			"include": "#constant"
+		}
+	],
+	"repository": {
+		"keyword": {
+			"patterns": [{
+				"name": "keyword.control.tfdbi",
+				"match": "if|while|for|return|let"
+			}, {
+				"name": "keyword.operator.tfdbi",
+				"match": "\\$|\\?|\\:|\\+|\\*|<\\+>|<\\*>|\\;|\\-|\\=|\\|"
+			}, {
+				"name": "entity.other.attribute-name.tfdbi",
+				"match": "\\^|\\`|\\'|\\,|\\%|\\]|\\["
+			}, {
+				"match": "true|false|null",
+				"name": "constant.language.tfdbi"
+			}, {
+				"match": "err",
+				"name": "invalid.illegal.tfdbi"
+			}]
+		},
+		"string": {
+			"name": "string.quoted.double.tfdbi",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [{
+				"name": "constant.character.escape.tfdbi",
+				"match": "\\\\."
+			}]
+		},
+		"comment": {
+			"patterns": [{
+				"name": "comment.line.tfdbi",
+				"match":  "//.*$"
+			}, {
+				"name": "comment.block.tfdbi",
+				"begin": "/\\*",
+				"end": "\\*/"
+			}, {
+				"name": "comment.line.tfdbi",
+				"match":  "⊣.*$"
+			}, {
+				"name": "comment.block.tfdbi",
+				"match": "^\\s*[\u2500-\u25FF][^\n]*[\u2500-\u25FF]"
+			}, {
+				"name": "comment.line.tfdbi",
+				"match": "^\\[[a-zA-Z\\(\\)]+\\].*$"
+			}]
+		},
+		"constant": {
+			"patterns": [{
+				"match": "[0-9⁰¹²³⁴-⁹ω]+",
+				"name": "constant.numeric.tfdbi"
+			}]
+		},
+		"variable": {
+			"patterns": [{
+				"match": "[_a-zA-Z][_a-zA-Z0-9]*",
+				"name": "variable.other.tfdbi"
+			}]
+		}
+	},
+	"scopeName": "source.tfdbi"
+}
