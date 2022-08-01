@@ -113,6 +113,9 @@ sealed trait OM[T] extends OMNode[T]:
   def head: T = this match
     case item(_, Some(t), _) => t
     case _                   => throw Exception("whoops")
+  def ohead: Option[T] = this match
+    case item(_, Some(t), _) => Some(t)
+    case _                   => None
   def cons(v: Option[T]): item[T] = this match
     case nil()            => item(nil().padr(), v, 1)
     case item(l, _, size) => item(l, v, size)
@@ -165,6 +168,28 @@ private type Right[T] = pr[T] | rnil[T] | item[T]
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// TODO: DOM
+
+case class DOM[T](om: OM[T], mo: OM[T]):
+  override def toString: String = s"$om >< $mo"
+  def size: Ordinal = om.size
+  def level: Ordinal = om.level
+  def isLevelZero: Boolean = om.isLevelZero
+  def head: T = om.head
+  def apply(o: Ordinal = 0) = this.chop(o).head
+  def cons(v: Option[T]): DOM[T] = DOM(om.cons(v), mo.cons(v))
+  def cons(v: T): DOM[T] = DOM(om.cons(v), mo.cons(v))
+  def cons(): DOM[T] = DOM(om.cons(), mo.cons())
+  def cons1(t: T): DOM[T] = this.padp(1).cons(t)
+  // def pad(o: Ordinal): DOM[T] = DOM(om.pad(o), mo.chopm(o))
+  def padp(o: Ordinal): DOM[T] = DOM(om.padp(o), mo.chop(o))
+  // def chopm(o: Ordinal): DOM[T] = DOM(om.chopm(o), mo.pad(o))
+  def chop(o: Ordinal): DOM[T] = 
+    val om2 = om.chop(o)
+    DOM(om2, mo.padp(o).cons(om2.ohead))
+
+////////////////////////////////////////////////////////////////////////////////
+
 def testOM() =
   ----()
 
@@ -183,5 +208,29 @@ def testOM() =
   println(M.size)
   println(M.chop(w))
   println(M.chop(w).size)
+
+  ----()
+
+def testDOM() = 
+  ----()
+  val L: DOM[String] = DOM(nil(), nil())
+  println(L)
+  val L2 = L.cons1("b").padp(w).cons1("x")
+  println(L2)
+  println(L2.chop(1))
+  println(L2.chop(w))
+
+  ----()
+
+  // FIXME: these should be the same:
+  // should have `mo: OM[OM[T]]`
+  println(L2.chop(w).padp(w))
+  println(L2)
+
+  ----()
+
+  // FIXME: these should be the same:
+  println(L2.chop(w+1))
+  println(L2.chop(w).chop(1))
 
   ----()

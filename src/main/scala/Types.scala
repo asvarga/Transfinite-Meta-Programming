@@ -200,6 +200,15 @@ object Env:
   def level(using env: Env): Ordinal = env.level
   def isLevelZero(using env: Env): Boolean = env.isLevelZero
 
+
+type DEnv = DOM[(Sym, (Val, Val))]
+def lookup(denv: DEnv, s: Sym): (Val, Val) = lookup(denv.om, s)
+object DEnv:
+  def empty: DEnv = DOM(Env.empty, Env.empty)
+  def current(using denv: DEnv): DEnv = denv
+  // TODO: ...
+
+
 class Code(tc: Term):
   val t: Term = tc match
     case quo(o, t) => t // TODO: what if o != ω
