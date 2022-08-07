@@ -170,11 +170,12 @@ private type Right[T] = pr[T] | rnil[T] | item[T]
 
 case class DOM[T](om: OM[T], mo: OM[OM[T]]):
   override def toString: String = s"$om >< ${mo.debug}"
+  def debug: String = s"${om.debug} >< ${mo.debug}"
   def size: Ordinal = om.size
   def level: Ordinal = om.level
   def isLevelZero: Boolean = om.isLevelZero
   def head: T = om.head
-  // def apply(o: Ordinal = 0) = this.chop(o).head
+  def apply(o: Ordinal = 0) = this.chop(o).head
   def cons(v: Option[T]): DOM[T] = DOM(om.cons(v), mo)
   def cons(v: T): DOM[T] = DOM(om.cons(v), mo)
   def cons(): DOM[T] = DOM(om.cons(), mo)

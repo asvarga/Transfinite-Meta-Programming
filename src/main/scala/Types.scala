@@ -206,8 +206,17 @@ def lookup(denv: DEnv, s: Sym): (Val, Val) = lookup(denv.om, s)
 object DEnv:
   def empty: DEnv = DOM(Env.empty, nil())
   def current(using denv: DEnv): DEnv = denv
-  // TODO: ...
-
+  def size(using denv: DEnv) = denv.size
+  def debug(using denv: DEnv) = denv.debug
+  def apply(s: Sym)(using denv: DEnv): (Val, Val) = lookup(denv.om, s)
+  def apply(o: Ordinal)(using denv: DEnv): (Val, Val) = denv(o)._2
+  // def chop(s: Sym)(using denv: DEnv): DEnv = denv.seek(t => t._1 == s)
+  def chop(o: Ordinal)(using denv: DEnv): DEnv = denv.chop(o)
+  // def shift(so: SOrdinal)(using denv: DEnv): DEnv = denv.shift(so)
+  def pad(o: Ordinal)(using denv: DEnv): DEnv = denv.pad(o)
+  def head(using denv: DEnv): (Val, Val) = denv.head._2
+  def level(using denv: DEnv): Ordinal = denv.level
+  def isLevelZero(using denv: DEnv): Boolean = denv.isLevelZero
 
 class Code(tc: Term):
   val t: Term = tc match
