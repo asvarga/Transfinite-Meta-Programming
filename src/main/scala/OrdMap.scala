@@ -80,6 +80,11 @@ private sealed trait OMNode[T]:
     case pr(l, rnil())    => s"(${l.debug}"
     case pr(l, r)         => s")${r.debug}" // favor right
     case _: Nil[T]        => ""
+  def debug[S](f: T => S): String = this match
+    case item(l, v, _)    => s"${v.fold("_")(f)}(${l.debug(f)}"
+    case pr(l, rnil())    => s"(${l.debug(f)}"
+    case pr(l, r)         => s")${r.debug(f)}" // favor right
+    case _: Nil[T]        => ""
   def cons(v: Option[T], size: Ordinal): item[T] = this match
     case item(l, _, _) => item(l, v, size)
     case _           => item(this.asInstanceOf[Left[T]], v, size)
@@ -171,6 +176,7 @@ private type Right[T] = pr[T] | rnil[T] | item[T]
 case class DOM[T](om: OM[T], mo: OM[OM[T]]):
   override def toString: String = s"$om >< ${mo.debug}"
   def debug: String = s"${om.debug} >< ${mo.debug}"
+  def debug[S](f: T => S): String = s"${om.debug(f)} >< ${mo.debug}"
   def size: Ordinal = om.size
   def level: Ordinal = om.level
   def isLevelZero: Boolean = om.isLevelZero

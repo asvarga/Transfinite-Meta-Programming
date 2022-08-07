@@ -189,7 +189,7 @@ object Env:
   def empty: Env = nil()
   def current(using env: Env): Env = env
   def size(using env: Env) = env.size
-  def debug(using env: Env) = env.debug
+  def debug(using env: Env) = env.debug[Val](t => t._2._1)
   def apply(s: Sym)(using env: Env): (Val, Val) = lookup(env, s)
   def apply(o: Ordinal)(using env: Env): (Val, Val) = env(o)._2
   def chop(s: Sym)(using env: Env): Env = env.seek(t => t._1 == s)
@@ -207,7 +207,7 @@ object DEnv:
   def empty: DEnv = DOM(Env.empty, nil())
   def current(using denv: DEnv): DEnv = denv
   def size(using denv: DEnv) = denv.size
-  def debug(using denv: DEnv) = denv.debug
+  def debug(using denv: DEnv) = denv.debug[Val](t => t._2._1)
   def apply(s: Sym)(using denv: DEnv): (Val, Val) = lookup(denv.om, s)
   def apply(o: Ordinal)(using denv: DEnv): (Val, Val) = denv(o)._2
   // def chop(s: Sym)(using denv: DEnv): DEnv = denv.seek(t => t._1 == s)
