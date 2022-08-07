@@ -168,25 +168,39 @@ private type Right[T] = pr[T] | rnil[T] | item[T]
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// TODO: DOM
-
-case class DOM[T](om: OM[T], mo: OM[T]):
-  override def toString: String = s"$om >< $mo"
+case class DOM[T](om: OM[T], mo: OM[OM[T]]):
+  override def toString: String = s"$om >< ${mo.debug}"
   def size: Ordinal = om.size
   def level: Ordinal = om.level
   def isLevelZero: Boolean = om.isLevelZero
   def head: T = om.head
-  def apply(o: Ordinal = 0) = this.chop(o).head
-  def cons(v: Option[T]): DOM[T] = DOM(om.cons(v), mo.cons(v))
-  def cons(v: T): DOM[T] = DOM(om.cons(v), mo.cons(v))
-  def cons(): DOM[T] = DOM(om.cons(), mo.cons())
-  def cons1(t: T): DOM[T] = this.padp(1).cons(t)
-  // def pad(o: Ordinal): DOM[T] = DOM(om.pad(o), mo.chopm(o))
-  def padp(o: Ordinal): DOM[T] = DOM(om.padp(o), mo.chop(o))
-  // def chopm(o: Ordinal): DOM[T] = DOM(om.chopm(o), mo.pad(o))
-  def chop(o: Ordinal): DOM[T] = 
-    val om2 = om.chop(o)
-    DOM(om2, mo.padp(o).cons(om2.ohead))
+  // def apply(o: Ordinal = 0) = this.chop(o).head
+  def cons(v: Option[T]): DOM[T] = DOM(om.cons(v), mo)
+  def cons(v: T): DOM[T] = DOM(om.cons(v), mo)
+  def cons(): DOM[T] = DOM(om.cons(), mo)
+  def cons1(t: T): DOM[T] = this.pad(1).cons(t)
+  def pad(o: Ordinal): DOM[T] = 
+    val mo_ = mo.chop(o)
+    mo_.ohead match
+      case Some(om_) => return DOM(om_, mo_)
+      case None      => return DOM(om.pad(o), mo_)
+    DOM(om.pad(o), mo.chop(o))
+  def chop(o: Ordinal): DOM[T] = o match
+    case z() => this
+    case ord(a, n, b) => 
+      var om_ = om
+      var mo_ = mo
+      val mono = ord(a, 1, 0)
+      for (i <- 0 until I(n)) om_.chopm(mono) match
+        case rnil()        => return DOM(om_.cons(), mo_)   // undershot
+        case nil()         => return DOM(nil(), mo_)        // overshot
+        case item(l, v, s) =>                               // exact
+          mo_ = mo_.cons(om_).pad(mono) 
+          om_ = item(l, v, s)
+        case t             => throw Absurd                  // impossible
+      DOM(om_, mo_).chop(b)
+  def forget: DOM[T] = DOM(om, nil())
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -215,22 +229,15 @@ def testDOM() =
   ----()
   val L: DOM[String] = DOM(nil(), nil())
   println(L)
-  val L2 = L.cons1("b").padp(w).cons1("x")
+  val L2 = L.cons1("a").pad(w).cons1("b").pad(w).cons1("c")
   println(L2)
   println(L2.chop(1))
   println(L2.chop(w))
-
   ----()
-
-  // FIXME: these should be the same:
-  // should have `mo: OM[OM[T]]`
-  println(L2.chop(w).padp(w))
   println(L2)
-
+  println(L2.chop(w).pad(w))        // remembers c()
+  println(L2.chop(w).forget.pad(w)) // forgets c()
   ----()
-
-  // FIXME: these should be the same:
   println(L2.chop(w+1))
   println(L2.chop(w).chop(1))
-
   ----()

@@ -204,7 +204,7 @@ object Env:
 type DEnv = DOM[(Sym, (Val, Val))]
 def lookup(denv: DEnv, s: Sym): (Val, Val) = lookup(denv.om, s)
 object DEnv:
-  def empty: DEnv = DOM(Env.empty, Env.empty)
+  def empty: DEnv = DOM(Env.empty, nil())
   def current(using denv: DEnv): DEnv = denv
   // TODO: ...
 
