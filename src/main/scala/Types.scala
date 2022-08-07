@@ -183,40 +183,55 @@ case class _c() extends Type
 case class _lam(a: Type, b: Type) extends Type
 case class _quo(ty: Type) extends Type
 
+trait AbEnv[E]:
+  def empty: E
+  def current(using env: E): E
+  def size(using env: E): Ordinal
+  def debug(using env: E): String
+  def apply(s: Sym)(using env: E): (Val, Val)
+  def apply(o: Ordinal)(using env: E): (Val, Val)
+  // def chop(s: Sym)(using env: E): E
+  def chop(o: Ordinal)(using env: E): E
+  // def shift(so: SOrdinal)(using env: E): E
+  def pad(o: Ordinal)(using env: E): E
+  def head(using env: E): (Val, Val)
+  def level(using env: E): Ordinal
+  def isLevelZero(using env: E): Boolean
+
 type Env = OM[(Sym, (Val, Val))]
 def lookup(env: Env, s: Sym) = env.find(t => t._1 == s)._2
-object Env:
-  def empty: Env = nil()
-  def current(using env: Env): Env = env
+object Env extends AbEnv[Env]:
+  def empty = nil()
+  def current(using env: Env) = env
   def size(using env: Env) = env.size
   def debug(using env: Env) = env.debug[Val](t => t._2._1)
-  def apply(s: Sym)(using env: Env): (Val, Val) = lookup(env, s)
-  def apply(o: Ordinal)(using env: Env): (Val, Val) = env(o)._2
-  def chop(s: Sym)(using env: Env): Env = env.seek(t => t._1 == s)
-  def chop(o: Ordinal)(using env: Env): Env = env.chop(o)
-  // def shift(so: SOrdinal)(using env: Env): Env = env.shift(so)
-  def pad(o: Ordinal)(using env: Env): Env = env.pad(o)
-  def head(using env: Env): (Val, Val) = env.head._2
-  def level(using env: Env): Ordinal = env.level
-  def isLevelZero(using env: Env): Boolean = env.isLevelZero
+  def apply(s: Sym)(using env: Env) = lookup(env, s)
+  def apply(o: Ordinal)(using env: Env) = env(o)._2
+  def chop(s: Sym)(using env: Env) = env.seek(t => t._1 == s)
+  def chop(o: Ordinal)(using env: Env) = env.chop(o)
+  // def shift(so: SOrdinal)(using env: Env) = env.shift(so)
+  def pad(o: Ordinal)(using env: Env) = env.pad(o)
+  def head(using env: Env) = env.head._2
+  def level(using env: Env) = env.level
+  def isLevelZero(using env: Env) = env.isLevelZero
 
 
 type DEnv = DOM[(Sym, (Val, Val))]
 def lookup(denv: DEnv, s: Sym): (Val, Val) = lookup(denv.om, s)
-object DEnv:
-  def empty: DEnv = DOM(Env.empty, nil())
-  def current(using denv: DEnv): DEnv = denv
+object DEnv extends AbEnv[DEnv]:
+  def empty = DOM(nil(), nil())
+  def current(using denv: DEnv) = denv
   def size(using denv: DEnv) = denv.size
   def debug(using denv: DEnv) = denv.debug[Val](t => t._2._1)
-  def apply(s: Sym)(using denv: DEnv): (Val, Val) = lookup(denv.om, s)
-  def apply(o: Ordinal)(using denv: DEnv): (Val, Val) = denv(o)._2
-  // def chop(s: Sym)(using denv: DEnv): DEnv = denv.seek(t => t._1 == s)
-  def chop(o: Ordinal)(using denv: DEnv): DEnv = denv.chop(o)
-  // def shift(so: SOrdinal)(using denv: DEnv): DEnv = denv.shift(so)
-  def pad(o: Ordinal)(using denv: DEnv): DEnv = denv.pad(o)
-  def head(using denv: DEnv): (Val, Val) = denv.head._2
-  def level(using denv: DEnv): Ordinal = denv.level
-  def isLevelZero(using denv: DEnv): Boolean = denv.isLevelZero
+  def apply(s: Sym)(using denv: DEnv) = lookup(denv.om, s)
+  def apply(o: Ordinal)(using denv: DEnv) = denv(o)._2
+  // def chop(s: Sym)(using denv: DEnv) = denv.seek(t => t._1 == s)
+  def chop(o: Ordinal)(using denv: DEnv) = denv.chop(o)
+  // def shift(so: SOrdinal)(using denv: DEnv) = denv.shift(so)
+  def pad(o: Ordinal)(using denv: DEnv) = denv.pad(o)
+  def head(using denv: DEnv) = denv.head._2
+  def level(using denv: DEnv) = denv.level
+  def isLevelZero(using denv: DEnv) = denv.isLevelZero
 
 class Code(tc: Term):
   val t: Term = tc match
