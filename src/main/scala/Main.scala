@@ -11,14 +11,14 @@ import parser.*
 /// Main ///
 
 @main def hello: Unit =
-  given Env = Env.empty
+  given DEnv = DEnv.empty
   given Tracer = Tracer.verbose
   
   // test4()
   // testOM()
   // test7()
-  // test8()
-  testDOM()
+  test8()
+  // testDOM()
   // test9()
   // test10()
   // test11()
@@ -29,7 +29,7 @@ def test10() =
   println(m)
   ----()
   
-def test4()(using Env, Tracer) =
+def test4()(using DEnv, Tracer) =
   given Lib = Lib.empty
   val repl = Repl.noop
   ----()
@@ -54,7 +54,7 @@ def test4()(using Env, Tracer) =
 
   ----()
 
-def test7()(using Env, Tracer) =
+def test7()(using DEnv, Tracer) =
   given Lib = Lib.empty
 
   ----()
@@ -92,7 +92,7 @@ def test8()(using Tracer) =
   repl(prog)
   ----()
 
-def test9()(using Env, Tracer) =
+def test9()(using DEnv, Tracer) =
   given Lib = Lib.empty
   // val repl = Repl.noop
   ----()
@@ -101,7 +101,7 @@ def test9()(using Env, Tracer) =
   ----()
 
 
-def test11()(using Env, Tracer) =
+def test11()(using DEnv, Tracer) =
   given Lib = Lib.empty
   // val repl = Repl.noop
   ----()

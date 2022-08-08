@@ -12,32 +12,32 @@ import scala.collection.mutable
 /// Eval ///
 
 // entry point
-def eval(t: Term)(using Env, Lib, Tracer): Term =
-  if Env.isLevelZero then evalZ(t) else evalS(t)
+def eval(t: Term)(using DEnv, Lib, Tracer): Term =
+  if DEnv.isLevelZero then evalZ(t) else evalS(t)
 
 // specialized to lvl==0
-def evalZ(t: Term)(using Env, Lib, Tracer): Val =
+def evalZ(t: Term)(using DEnv, Lib, Tracer): Val =
   Tracer.post(t, Tracer.pre(t) match
     case t: Val           => t
-    case v()              => Env.head._1
-    case f()              => Env.head._2
-    case s(s, t)          => evalZ(t)(using Env.chop(s))
+    case v()              => DEnv.head._1
+    case f()              => DEnv.head._2
+    case s(s, t)          => err() // evalZ(t)(using DEnv.chop(s))
     case qq(o, t) => 
-      mk_quo(o, eval(t)(using Env.pad(o)))  // goto eval
+      mk_quo(o, eval(t)(using DEnv.pad(o)))  // goto eval
     case lift(o, t) => 
       mk_quo(o, evalZ(t))
-    case run(o, t) => evalZ(mk_spl(o, evalZ(t)(using Env.empty)))(using Env.empty)
-    case spl(o, t) => evalZ(t)(using Env.chop(o))
-      // o ? Env.size match
-      // case LT => evalZ(t)(using Env.chop(o))
-      // case EQ => evalZ(t)(using Env.empty)
+    case run(o, t) => evalZ(mk_spl(o, evalZ(t)(using DEnv.empty)))(using DEnv.empty)
+    case spl(o, t) => evalZ(t)(using DEnv.chop(o))
+      // o ? DEnv.size match
+      // case LT => evalZ(t)(using DEnv.chop(o))
+      // case EQ => evalZ(t)(using DEnv.empty)
       // case GT => 
-      //   val u = evalZ(t)(using Env.empty)     // empty the Env
+      //   val u = evalZ(t)(using DEnv.empty)     // empty the DEnv
       //   u match
-      //     case u: quo => evalZ(mk_spl((o-Env.size).asOrd, u))  // continue upwards
+      //     case u: quo => evalZ(mk_spl((o-DEnv.size).asOrd, u))  // continue upwards
       //     case _ => err()
-    case lam(s, t)        => clo(s, t, Env.current)
-    case plam(s, t)       => pclo(s, t, Env.current)
+    case lam(s, t)        => clo(s, t, DEnv.current)
+    case plam(s, t)       => pclo(s, t, DEnv.current)
     case link(s)          => evalZ(Lib(s))
     case app(f, t)        => (evalZ(f), evalZ(t)) match
       case (f@clo(s, b, nv), t) => evalZ(b)(using nv.cons1((s, (t, f))))
@@ -51,7 +51,7 @@ def evalZ(t: Term)(using Env, Lib, Tracer): Val =
             case _ => throw Absurd
           val kvs = m.toList.filter(!_._1.isInstanceOf[link]).sortBy(t=>v2o(t._1))(using OrdinalOrdering)
           // println(kvs.toMap)
-          def build(kvs: List[(Term, Term)]): Env = kvs match
+          def build(kvs: List[(Term, Term)]): DEnv = kvs match
             case (k1,v1)::(k2,v2)::kvs => build((k2,v2)::kvs).pad(v2o(k2)-v2o(k1)).cons(("", (v1.asInstanceOf[Val], err())))
             case (k,v)::kvs => nv.cons1((k, (v.asInstanceOf[Val], f))) // TODO: attach f here or other end or everywhere?
             case Nil => nv
@@ -76,30 +76,30 @@ def evalZ(t: Term)(using Env, Lib, Tracer): Val =
   )
 
 // specialized to lvl!=0
-def evalS(t: Term)(using Env, Lib, Tracer): Term =
+def evalS(t: Term)(using DEnv, Lib, Tracer): Term =
   Tracer.post(t, Tracer.pre(t) match
     case quo(o, s)        => // must be before `case t: Val`
-      if Env.size >> o then  // we may have contained dominating splices
-        mk_quo(o, evalS(s)(using Env.pad(o)))
+      if DEnv.size >> o then  // we may have contained dominating splices
+        mk_quo(o, evalS(s)(using DEnv.pad(o)))
       else
         t
     case t: Val           => t
     case lift(o, s)       => lift(o, evalS(s))
     case v()              => t
     case f()              => t
-    case s(s, t)          => evalS(t)(using Env.chop(s))
-    // case sh(so, t)        => mk_sh(so, eval(t)(using Env.shift(so)))
-    // 6 cases for sh! TODO: simplify (split on: |Env|+so? |Env|>>o?)
+    case s(s, t)          => err() // evalS(t)(using DEnv.chop(s))
+    // case sh(so, t)        => mk_sh(so, eval(t)(using DEnv.shift(so)))
+    // 6 cases for sh! TODO: simplify (split on: |DEnv|+so? |DEnv|>>o?)
     case qq(o, t) => 
-      val u = evalS(t)(using Env.pad(o))
-      if Env.size >> o then mk_qq_co(o, u) else mk_qq(o, u)
+      val u = evalS(t)(using DEnv.pad(o))
+      if DEnv.size >> o then mk_qq_co(o, u) else mk_qq(o, u)
     case run(o, t) => run(o, evalS(t))
     case spl(o, t) =>
-      if Env.size >> o then 
-        val u = evalS(t)(using Env.chop(o)) // we know |Env| - o > w
+      if DEnv.size >> o then 
+        val u = evalS(t)(using DEnv.chop(o)) // we know |DEnv| - o > w
         mk_spl_co(o, u)
-      else mk_spl(o, eval(t)(using Env.chop(o)))
-    case lam(s, t)        => lam(s, evalS(t)) // FIXME: should be (using Env.pad(1))?
+      else mk_spl(o, eval(t)(using DEnv.chop(o)))
+    case lam(s, t)        => lam(s, evalS(t)(using DEnv.pad(1)))
     case plam(p, t)       => plam(p, evalS(t))
     case link(s)          => evalS(Lib(s))
     case app(f, t)        => app(evalS(f), evalS(t))

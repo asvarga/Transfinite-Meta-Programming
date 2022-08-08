@@ -8,7 +8,7 @@ import types.*
 ///
 
 class Repl:
-  given Env = Env.empty
+  given DEnv = DEnv.empty
   given Lib = Lib.empty
 
   // def define(s: Sym, t: Term)(using Tracer): Term = 

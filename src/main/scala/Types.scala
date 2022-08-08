@@ -40,8 +40,8 @@ object app:
     if ts.length == 0 then f else app(app(f, ts.dropRight(1):_*), ts.last)
 case class app0(f: Term, t: Term) extends Term
 case class c(i: Ordinal) extends Val
-case class clo(s: Sym, t: Term, nv: Env) extends Val
-case class pclo(p: Term, t: Term, nv: Env) extends Val
+case class clo(s: Sym, t: Term, nv: DEnv) extends Val
+case class pclo(p: Term, t: Term, nv: DEnv) extends Val
 case class err() extends Val
 case class f() extends Term
 object f:
@@ -96,8 +96,8 @@ object v:
 
 ////
 
-def isVal(t: Term)(using Env): Boolean = t match
-  case quo(o, s) => !(Env.size >> o) // may contain dominating splices
+def isVal(t: Term)(using DEnv): Boolean = t match
+  case quo(o, s) => !(DEnv.size >> o) // may contain dominating splices
   case t: Val    => true
   case _         => false
 
@@ -204,7 +204,7 @@ object Env:
 type DEnv = DOM[(Sym, (Val, Val))]
 def lookup(denv: DEnv, s: Sym): (Val, Val) = lookup(denv.om, s)
 object DEnv:
-  def empty: DEnv = DOM(Env.empty, nil())
+  def empty: DEnv = DOM(nil(), nil())
   def current(using denv: DEnv): DEnv = denv
   def size(using denv: DEnv) = denv.size
   def debug(using denv: DEnv) = denv.debug[Val](t => t._2._1)
@@ -222,7 +222,7 @@ class Code(tc: Term):
   val t: Term = tc match
     case quo(o, t) => t // TODO: what if o != ω
     case _         => err()
-  def apply()(using Tracer): Val = evalZ(t)(using Env.empty, Lib.empty)
+  def apply()(using Tracer): Val = evalZ(t)(using DEnv.empty, Lib.empty)
 
 // type Lib = Map[Sym, Code]
 // object Lib:
