@@ -31,13 +31,14 @@ private sealed trait Node[T]:
   def getR: Node[T] = this match
     case pair(_, r) => r
     case _ => nil()
-  def pairL(r: Node[T] = nil()) = pair(this.asInstanceOf[Pair[T]], r)
-  def pairR(l: Pair[T] = nil()) = pair(l, this)
+  def putL(r: Node[T] = nil()) = pair(this.asInstanceOf[Pair[T]], r)
+  def putR(l: Pair[T] = nil()) = pair(l, this)
 
 
 sealed trait Zip[T] extends Node[T]:
   def cons(v: T): Zip[T]
-  def pad(o: Ordinal, v: T): Zip[T]
+  def put(o: Ordinal, v: T): Zip[T]
+  def get(o: Ordinal): Zip[T]
 // sealed trait Pair[T] extends Node[T]
 
 // type Node[T] = pair[T] | dn[T] | up[T] | nil[T]
@@ -54,17 +55,24 @@ private case class nil[T]() extends Node[T] // Pair[T]
 // private case class nil[T]() extends Node[T]
 private case class dn[T](l: Pair[T], eq: Up[T], v: T) extends Zip[T]:
   def cons(v: T): dn[T] = dn(this.l, this.eq, v)
-  // def pad(o: Ordinal): dn[T] = this
-  def pad(o: Ordinal, v: T): dn[T] = 
-    def pad(t: Node[T], path: String): Pud[T] = path match 
+  def put(o: Ordinal, v: T): dn[T] = 
+    def put(t: Node[T], path: String): Pud[T] = path match 
       case "" => this
-      case s"($rest" => pad(t.getL, rest).pairL()
-      case s")$rest" => pad(t.getR, rest).pairR(t.getL)  
-    dn(pad(this, ord2path(o)).getL, nil(), v)
+      case s"($rest" => put(t.getL, rest).putL()
+      case s")$rest" => put(t.getR, rest).putR(t.getL)  
+    dn(put(this, ord2path(o)).getL, nil(), v)
+  def get(o: Ordinal): dn[T] = this   // TODO:
 
 private case class up[T](l: Pair[T], eq: Dn[T], v: T) extends Zip[T]:
   def cons(v: T): up[T] = up(this.l, this.eq, v)
-  def pad(o: Ordinal, v: T): up[T] = this
+  def put(o: Ordinal, v: T): up[T] = 
+    def put(t: Node[T], path: String): Pud[T] = path match 
+      case "" => this
+      case s"($rest" => put(t.getL, rest).putL()
+      case s")$rest" => put(t.getR, rest).putR(t.getL)  
+    up(put(this, ord2path(o)).getL, nil(), v)
+  def get(o: Ordinal): up[T] = this   // TODO:
+
 
 // type ZipO[T] = Zip[Option[T]]
 
@@ -84,7 +92,7 @@ def testZipper() =
   // println("zip!")
   val t = empty()//.cons(Some(5))
   println(t)
-  val s = t.pad(w*w, None)
+  val s = t.put(w*w, None)
   println(s)
   ----()
 
