@@ -61,7 +61,13 @@ private case class dn[T](l: Pair[T], eq: Up[T], v: T) extends Zip[T]:
       case s"($rest" => put(t.getL, rest).putL()
       case s")$rest" => put(t.getR, rest).putR(t.getL)  
     dn(put(this, ord2path(o)).getL, nil(), v)
-  def get(o: Ordinal): dn[T] = this   // TODO:
+  def get(o: Ordinal): dn[T] =
+    def get(t: Node[T], path: String): Node[T] = path match
+      case "" => t
+      case s"($rest" => get(t.getL, rest)
+      case s")$rest" => get(t.getR, rest)
+    get(this, ord2path(o)).asInstanceOf[dn[T]]
+
 
 private case class up[T](l: Pair[T], eq: Dn[T], v: T) extends Zip[T]:
   def cons(v: T): up[T] = up(this.l, this.eq, v)
@@ -71,7 +77,12 @@ private case class up[T](l: Pair[T], eq: Dn[T], v: T) extends Zip[T]:
       case s"($rest" => put(t.getL, rest).putL()
       case s")$rest" => put(t.getR, rest).putR(t.getL)  
     up(put(this, ord2path(o)).getL, nil(), v)
-  def get(o: Ordinal): up[T] = this   // TODO:
+  def get(o: Ordinal): up[T] =
+    def get(t: Node[T], path: String): Node[T] = path match
+      case "" => t
+      case s"($rest" => get(t.getL, rest)
+      case s")$rest" => get(t.getR, rest)
+    get(this, ord2path(o)).asInstanceOf[up[T]]
 
 
 // type ZipO[T] = Zip[Option[T]]
@@ -82,17 +93,29 @@ def empty[T](v: T): dn[Option[T]] = dn(nil(), nil(), Some(v))
 
 ////////////////////////////////////////////////////////////////////////////////
 
-
-
-////////////////////////////////////////////////////////////////////////////////
-
-
 def testZipper() = 
   ----()
   // println("zip!")
-  val t = empty()//.cons(Some(5))
-  println(t)
-  val s = t.put(w*w, None)
-  println(s)
+  val t1 = empty()//.cons(Some(5))
+  println(t1)
+  val t2 = t1.put(w, None)
+  println(t2)
+  val t3 = t2.get(w)
+  println(t3)
+
+  // FIXME:
+  val t4 = t2.put(1, None)
+  println(t4)
+  val t5 = t4.get(1)
+  println(t5)
   ----()
 
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+
+TODO:
+  - fix the FIXME
+  - get should exit early and return: `under | good(OM) | over`
+  - the ziggy zaggy magic
+*/
