@@ -7,6 +7,7 @@ import repl.*
 import types.*
 import util.*
 import parser.*
+import zipper.*
 
 /// Main ///
 
@@ -17,11 +18,12 @@ import parser.*
   // test4()
   // testOM()
   // test7()
-  test8()
+  // test8()
   // testDOM()
   // test9()
   // test10()
   // test11()
+  testZipper()
 
 def test10() = 
   ----()
