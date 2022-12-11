@@ -38,9 +38,10 @@ type TZN[T] = Trie[T] | Zipper[T] | OTNone[T]
 
 
 def move_[T](so: SOrdinal, ot: OrdTree[T]): OrdTree[T] = so match
-  case pos(ord(a, n, b)) => move_(b, move_(ord2path(ord(a, 1, 0)), I(n), ot))
-  case neg(ord(a, n, b)) => move_(b, move_(ord2path(ord(a, 1, 0)), -I(n), ot))
-  case _ => ot
+  case pos(ord(a, n, z())) => move_(ord2path(ord(a, 1, 0)), I(n), ot)
+  case neg(ord(a, n, z())) => move_(ord2path(ord(a, 1, 0)), -I(n), ot)
+  // case pos(z()) | neg(z()) => ot
+  case _ => throw new Exception
 
 
 
@@ -111,3 +112,11 @@ def testOrdTree() =
   println(n.set(5).move(1).set(6).move(w).set(7).v)
   println(n.set(5).move(1).set(6).move(w).set(7).move(-w).v)
   println(n.set(5).move(1).set(6).move(w).set(7).move(-w).move(-1).v)
+  println()
+  println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).v)
+  println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).move(-w).move(-1).v)
+  println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).move(-w).move(-1).move(w).v)
+  println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).move(-w).move(-1).move(w).move(1).v)
+  println(n.set(5).move(1).set(6).move(w).set(7)
+    .move(`ω^`(w)).move(-`ω^`(w))
+    .move(-1).set(8).move(-w).move(-1).move(w).move(1).v)
