@@ -21,7 +21,8 @@ case class Trie[T](l: TN[T], r: TZN[T]) extends Node[T]:
   override def toString: String = s"(${this.l}, ${this.r})"
 // a zipper list (2 lists) of stacks of right nodes:
 case class Zipper[T](l: List[List[Node[T]]], r: List[List[Node[T]]]) extends Node[T]:
-  override def toString: String = s"${this.l.mkString("<<")}<>${this.r.mkString(">>")}"
+  override def toString: String = 
+    s"${this.l.map(L => L.mkString("[",",","]")).mkString("<<")}<>${this.r.map(L => L.mkString("[",",","]")).mkString(">>")}"
 // a leaf of the tree / root of the zipper
 case class OrdTree[T](l: TN[T], v: Option[T]) extends Node[T]:
   def move(so: SOrdinal): OrdTree[T] = move_(so, this)
@@ -60,12 +61,12 @@ def move_[T](p: String, i: Int, ot: OrdTree[T]): OrdTree[T] =
   def f(p: String, n: TZN[T], rstack: List[Node[T]] = Nil): (TZ[T], List[Node[T]]) = p match
     case s"($rest" => n match
       case Trie(l, r) => f(rest, l, r::rstack) match
-        case (l: Trie[T], (r:TZ[T])::rstack) => (Trie(l, r), rstack)
-        case (l: Trie[T], _) => (Trie(l, r), Nil)      
+        case (l: Trie[T], (r:TZN[T])::rstack) => (Trie(l, r), rstack)
+        case (l: Trie[T], Nil) => (Trie(l, r), Nil)      
         case _ => throw new Exception
       case OTNone() => f(rest, n, n::rstack) match
-        case (l: Trie[T], (r:TZ[T])::rstack) => (Trie(l, r), rstack)
-        case (l: Trie[T], _) => (Trie(l, n), Nil)
+        case (l: Trie[T], (r:TZN[T])::rstack) => (Trie(l, r), rstack)
+        case (l: Trie[T], Nil) => (Trie(l, n), Nil)
         case _ => throw new Exception
       case _ => throw new Exception
     case s")$rest" => n match
