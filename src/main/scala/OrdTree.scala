@@ -17,65 +17,32 @@ import spire.math.Natural
 
 sealed trait Node[T]
 // part of the upward trie:
-case class Trie[T](l: TN[T], r: TZN[T]) extends Node[T]
+case class Trie[T](l: TN[T], r: TZN[T]) extends Node[T]:
+  override def toString: String = s"(${this.l}, ${this.r})"
 // a zipper list (2 lists) of stacks of right nodes:
-case class Zipper[T](l: List[List[Node[T]]], r: List[List[Node[T]]]) extends Node[T]
+case class Zipper[T](l: List[List[Node[T]]], r: List[List[Node[T]]]) extends Node[T]:
+  override def toString: String = s"${this.l.mkString("<<")}<>${this.r.mkString(">>")}"
 // a leaf of the tree / root of the zipper
-case class OrdTree[T](l: TN[T], v: Option[T]) extends Node[T]
+case class OrdTree[T](l: TN[T], v: Option[T]) extends Node[T]:
+  def move(so: SOrdinal): OrdTree[T] = move_(so, this)
+  override def toString: String = s"${this.v}@${this.l}"
 // none
-case class OTNone[T]() extends Node[T]
+case class OTNone[T]() extends Node[T]:
+  override def toString: String = "_"
 
 type TN[T] = Trie[T] | OTNone[T]
 type TZ[T] = Trie[T] | Zipper[T]
 type TZN[T] = Trie[T] | Zipper[T] | OTNone[T]
 
 
-def move[T](ot: OrdTree[T], o: Ordinal): OrdTree[T] = o match
-  case z() => ot
-  case ord(a, n, b) => move(move(ord2path(a), I(n), ot), b)
+def move_[T](so: SOrdinal, ot: OrdTree[T]): OrdTree[T] = so match
+  case pos(ord(a, n, b)) => move_(b, move_(ord2path(ord(a, 1, 0)), I(n), ot))
+  case neg(ord(a, n, b)) => move_(b, move_(ord2path(ord(a, 1, 0)), -I(n), ot))
+  case _ => ot
 
-// def move[T](p: String, i: Int, ot: OrdTree[T]): OrdTree[T] =
-//   // climb up the tree by following trie
-//   def up(p: String, n: TZN[T], rstack: List[Node[T]]): (Zipper[T], List[Node[T]]) = p match
-//     case "" => n match
-//       case Trie(_, _) => throw new Exception
-//       case Zipper(_, _) => (n, rstack)           // found zipper
-//       case OTNone() => (Zipper([], []), rstack)  // lazily create new zipper
-//     case s"($rest" => n match
-//       case Trie(l, r) => up(rest, l, r::rstack)  // push r onto rstack
-//       case Zipper(_, _) => throw new Exception
-//       case OTNone() => up(rest, n, rstack)
-//     case s")$rest" => n match
-//       case Trie(_, r) => up(rest, r, rstack)
-//       case Zipper(_, _) => throw new Exception
-//       case OTNone() => up(rest, n, rstack)
-//   val (zipper, rstack) = up(p, ot.l, [ot])
 
-//   // move across zipper, lazily extending
-//   def left[S](l: List[S], s: S, r: List[S], n: Natural, pad: S): (List[S], S, List[S]) =
-//     if (n == 0) (l, s, r)
-//     else l match
-//       case head :: rest => left(rest, head, s::r, n-1, pad)
-//       case _ => left(l, pad, s::r, n-1, pad)
-//   def move[S](l: List[S], s: S, r: List[S], i: Int, pad: S): (List[S], S, List[S]) =
-//     if (i >= 0) left(l, s, r, i, pad)
-//     else {
-//       val (r, s, l) = left(r, s, l, -i, pad)
-//       (l, s, r)
-//     }
-//   val (l, s, r) = move[List[Node[T]]](zipper.l, rstack, zipper.r, i, [])
 
-//   // descend back down tree
-//   def down(p: String, n: TZN[T], rstack: List[Node[T]]): OrdTree[T] = p match
-//     case "" => n
-//     case s"$rest(" => rstack match
-//       case OrdTree(_, v) :: tail => OrdTree(n, v)
-//       case r :: tail => down(rest, Trie(n, r))
-//       case [] => throw new Exception    // FIXME: actually lazily build down
-//     case s"$rest)" => down(rest, Trie(?, n), rstack)  // TODO: 
-//   return down(p, Zipper(l, r), s)
-
-def move[T](p: String, i: Int, ot: OrdTree[T]): OrdTree[T] =
+def move_[T](p: String, i: Int, ot: OrdTree[T]): OrdTree[T] =
   // move across zipper, lazily extending
   def left[S](l: List[S], s: S, r: List[S], n: Natural, pad: S): (List[S], S, List[S]) =
     if (n == 0) (l, s, r)
@@ -94,20 +61,18 @@ def move[T](p: String, i: Int, ot: OrdTree[T]): OrdTree[T] =
     case s"($rest" => n match
       case Trie(l, r) => f(rest, l, r::rstack) match
         case (l: Trie[T], (r:TZ[T])::rstack) => (Trie(l, r), rstack)
-        case (l: Trie[T], Nil) => (Trie(l, r), Nil)      
+        case (l: Trie[T], _) => (Trie(l, r), Nil)      
         case _ => throw new Exception
       case OTNone() => f(rest, n, n::rstack) match
         case (l: Trie[T], (r:TZ[T])::rstack) => (Trie(l, r), rstack)
-        case (l: Trie[T], Nil) => (Trie(l, n), Nil)
+        case (l: Trie[T], _) => (Trie(l, n), Nil)
         case _ => throw new Exception
       case _ => throw new Exception
     case s")$rest" => n match
       case Trie(l, r) => f(rest, r, rstack) match
-        case (r: Trie[T], rstack) => (Trie(l, r), rstack)
-        case _ => throw new Exception
+        case (r, rstack) => (Trie(l, r), rstack)
       case n@OTNone() => f(rest, n, rstack) match
-        case (r: Trie[T], rstack) => (Trie(n, r), rstack)
-        case _ => throw new Exception
+        case (r, rstack) => (Trie(n, r), rstack)
       case _ => throw new Exception
     case "" => n match
       case Zipper(l, r) => move[List[Node[T]]](l, rstack, r, i, Nil) match  // found zipper
@@ -120,6 +85,7 @@ def move[T](p: String, i: Int, ot: OrdTree[T]): OrdTree[T] =
   p match 
     case s"($rest" => f(rest, ot.l, OrdTree(OTNone(), ot.v)::Nil) match
       case (l: Trie[T], OrdTree(_, v)::rstack) => OrdTree(l, v)
+      case (l: Trie[T], _) => OrdTree(l, None)
       case _ => throw new Exception
     case _ => throw new Exception
 
@@ -127,5 +93,13 @@ def move[T](p: String, i: Int, ot: OrdTree[T]): OrdTree[T] =
     
 def testOrdTree() = 
   ----()
-
+  val n = OrdTree(OTNone(), Some(5))
+  println(n)
+  println(n.move(1))
+  println(n.move(2))
+  println(n.move(3))
+  println(n.move(-1))
+  println(n.move(1).move(-1))
+  println(n.move(w))
+  println(n.move(w).move(-w))
 
