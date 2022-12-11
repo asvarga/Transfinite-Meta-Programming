@@ -8,6 +8,7 @@ import types.*
 import util.*
 import parser.*
 import zipper.*
+import ordtree.*
 
 /// Main ///
 
@@ -23,7 +24,8 @@ import zipper.*
   // test9()
   // test10()
   // test11()
-  testZipper()
+  // testZipper()
+  testOrdTree()
 
 def test10() = 
   ----()
