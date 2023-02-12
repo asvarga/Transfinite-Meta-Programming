@@ -15,26 +15,34 @@ import spire.math.Natural
 
 // case class OrdTree[T](node: Node[T], value: T)
 
-sealed trait Node[T]
+sealed trait Node[T]:
+  def map[S](f: T => S): Node[S]
 // part of the upward trie:
 case class Trie[T](l: TN[T] = OTNone[T](), r: TZN[T] = OTNone[T]()) extends Node[T]:
-  override def toString: String = s"(${this.l}, ${this.r})"
+  override def toString: String = s"(${l}, ${r})"
+  def map[S](f: T => S): Trie[S] = Trie(mapTN(l, f), mapTZN(r, f))
 // a zipper list (2 lists) of stacks of right nodes:
 case class Zipper[T](l: List[List[Node[T]]] = Nil, r: List[List[Node[T]]] = Nil) extends Node[T]:
   override def toString: String = 
-    s"${this.l.map(L => L.mkString("[",",","]")).mkString("<<")}<>${this.r.map(L => L.mkString("[",",","]")).mkString(">>")}"
+    s"${l.map(L => L.mkString("[",",","]")).mkString("<<")}<>${r.map(L => L.mkString("[",",","]")).mkString(">>")}"
+  def map[S](f: T => S): Zipper[S] = Zipper(l.map(_.map(_.map(f))), r.map(_.map(_.map(f))))
 // a leaf of the tree / root of the zipper
 case class OrdTree[T](l: TN[T] = OTNone[T](), v: Option[T] = None) extends Node[T]:
   def move(so: SOrdinal): OrdTree[T] = move_(so, this)
-  def set(t: T): OrdTree[T] = OrdTree(this.l, Some(t))
-  override def toString: String = s"${this.v}@${this.l}"
+  def set[S](t: T): OrdTree[T] = OrdTree(l, Some(t))
+  override def toString: String = s"${v}@${l}"
+  def map[S](f: T => S): OrdTree[S] = OrdTree(mapTN(l, f), v.map(f))
 // none
 case class OTNone[T]() extends Node[T]:
   override def toString: String = "_"
+  def map[S](f: T => S): OTNone[S] = OTNone()
 
 type TN[T] = Trie[T] | OTNone[T]
+def mapTN[T, S](n: TN[T], f: T => S): TN[S] = n match {case n@Trie(_, _) => n.map(f); case _ => OTNone()}
 type TZ[T] = Trie[T] | Zipper[T]
+def mapTZ[T, S](n: TZ[T], f: T => S): TZ[S] = n match {case n@Trie(_, _) => n.map(f); case n@Zipper(_, _) => n.map(f)}
 type TZN[T] = Trie[T] | Zipper[T] | OTNone[T]
+def mapTZN[T, S](n: TZN[T], f: T => S): TZN[S] = n match {case n@Trie(_, _) => n.map(f); case n@Zipper(_, _) => n.map(f); case _ => OTNone()}
 
 
 def move_[T](so: SOrdinal, ot: OrdTree[T]): OrdTree[T] = so match
@@ -106,17 +114,19 @@ def testOrdTree() =
   // println(n.move(w))
   // println(n.move(w).move(-w))
   val n  = OrdTree[Int]()
-  println(n)
-  println(n.set(5).v)
-  println(n.set(5).move(1).set(6).v)
-  println(n.set(5).move(1).set(6).move(w).set(7).v)
-  println(n.set(5).move(1).set(6).move(w).set(7).move(-w).v)
-  println(n.set(5).move(1).set(6).move(w).set(7).move(-w).move(-1).v)
-  println()
-  println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).v)
-  println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).move(-w).move(-1).v)
-  println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).move(-w).move(-1).move(w).v)
-  println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).move(-w).move(-1).move(w).move(1).v)
-  println(n.set(5).move(1).set(6).move(w).set(7)
-    .move(`ω^`(w)).move(-`ω^`(w))
-    .move(-1).set(8).move(-w).move(-1).move(w).move(1).v)
+  // println(n)
+  // println(n.set(5).v)
+  // println(n.set(5).move(1).set(6).v)
+  // println(n.set(5).move(1).set(6).move(w).set(7).v)
+  // println(n.set(5).move(1).set(6).move(w).set(7).move(-w).v)
+  // println(n.set(5).move(1).set(6).move(w).set(7).move(-w).move(-1).v)
+  // println()
+  // println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).v)
+  // println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).move(-w).move(-1).v)
+  // println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).move(-w).move(-1).move(w).v)
+  println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).move(-w).move(-1).move(w).move(1))
+  println(n.set(5).move(1).set(6).move(w).set(7).move(-1).set(8).move(-w).move(-1).move(w).move(1).map(_+1))
+  // println(n.set(5).move(1).set(6).move(w).set(7)
+  //   .move(`ω^`(w)).move(-`ω^`(w))
+  //   .move(-1).set(8).move(-w).move(-1).move(w).move(1).v)
+
