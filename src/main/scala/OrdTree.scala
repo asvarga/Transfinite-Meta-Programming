@@ -7,6 +7,7 @@ import util.*
 import ordinals.*
 import ordmap.*
 
+import collection.mutable
 import spire.math.Natural
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -136,10 +137,10 @@ def testOrdTree() =
 
   val n2 = OrdTree[String]().set("A")
     // .set("A").move(1).set("B").move(w).set("C").move(-1).set("D").move(ww).set("E")
-    // .move(1).set("A2")
+    .move(1).set("A2")
     .move(ww).set("B")
-    // .move(-w*w).set("C")
-    // .move(w).set("E")
+    .move(-w*w).set("C")
+    .move(w).set("E")
     
 
   draw(n2)
@@ -179,22 +180,48 @@ def draw(n: OrdTree[String]) =
     line(s"  ${x.s} -> ${y.s};")
     x
 
-  def yPaths(n: Node[String]): Set[String] = 
-    def up(n: Node[String], path: String = ""): Set[String] = n match
-      case OrdTree(l, _) => up(l, "1") + ""
-      case OTNone() => if path.charAt(path.length-1) == '0' then Set(path+"0"*(path.count(_=='1')-path.count(_=='0'))) else Set()
-      case Trie(l, r) => up(l, path + '1') ++ up(r, path + '0')
-      case Zipper(l, r) => (l++r).map(down(_, path)).fold(Set(path))(_++_)
+  def paths(n: Node[String]): (Map[String, Int], Map[String, Int]) = 
+    var xs = mutable.Set[String]()
+    var ys = mutable.Set[String]()
 
-    def down(rstack: List[Node[String]], path: String): Set[String] = rstack match
-      case Nil => Set()
-      case n :: ns => Set()
+    def up(n: Node[String], path: String = "", total: String = ""): Unit = n match
+      case OrdTree(l, _) => 
+        ys += ""
+        xs += ""
+        up(l, "1")
+      case OTNone() => 
+        if path.charAt(path.length-1) == '0' then ys += path+"0"*(path.count(_=='1')-path.count(_=='0'))
+      case Trie(l, r) => 
+        up(l, path + '1', total)
+        up(r, path + '0', total)
+      case Zipper(l, r) => 
+        ys += path
+        xs += total+path
+        val nath = path.map(_ match {case '0'=>'1'; case '1'=>'0'}) // '0'+'1'-_
+        var tot = total
+        for n <- l do
+          tot += path
+          xs += tot
+          down(n, path, tot)
+        tot = total
+        for n <- r do 
+          tot += nath
+          xs += tot
+          down(n, path, tot)
+
+    def down(rstack: List[Node[String]], path: String, total: String = ""): Unit = rstack match
+      case Nil => {}
+      case n :: ns =>
         val truncate = path.slice(0, path.lastIndexOf('1'))
-        up(n, truncate+'0') ++ down(ns, truncate)
+        up(n, truncate+'0', total)
+        down(ns, truncate, total)
 
     up(n)
-
-  println(yPaths(n).toList.sorted.zipWithIndex.map((x, i) => (x -> i)).toMap)
+    return (xs.toList.sorted.zipWithIndex.toMap, ys.toList.sorted.zipWithIndex.toMap)
+  
+  val (xs, ys) = paths(n)
+  println(xs)
+  println(ys)
     
 
   var _xmax = 0
