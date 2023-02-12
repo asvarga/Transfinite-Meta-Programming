@@ -174,9 +174,9 @@ def draw(n: OrdTree[String]) =
   var _id = 0
   def id() = {_id += 1; _id}
 
-  def point(x: Int = 0, y: Int = 0, z: Int = 0, label: String = "", color: String = "white"): Point = 
+  def point(x: Int = 0, y: Int = 0, z: Int = 0, label: String = "", color: String = "white", shape: String = "circle"): Point = 
     val name = s"n_${id()}"
-    line(s"  $name [pos=\"${x*150-z*25},${y*50}!\", label=\"$label\", fillcolor=$color];")
+    line(s"  $name [pos=\"${x*150-z*25},${y*50}!\", label=\"$label\", fillcolor=$color, shape=$shape];")
     // line(s"  $name [pos=\"${y*50},${z*50}!\", label=\"$label\", fillcolor=$color];")    // rotated for now
     // line(s"  $name [pos=\"${-z*50},${y*50}!\", label=\"$label\", fillcolor=$color];")    // rotated for now
     return Point(name, x, y, z)
@@ -243,7 +243,7 @@ def draw(n: OrdTree[String]) =
     // println(s"$hash\t<- $n")
     val ret = n match
       case OrdTree(l, v) => 
-        val p = point(getx(total), label=v.getOrElse(""), color="orange")
+        val p = point(getx(total), label=v.getOrElse(""), color="orange", shape=if total == "" then "doublecircle" else "circle")
         up(l, "1") match
           case Some(pl) => Some(edge(p, pl))
           case None => Some(p)
