@@ -130,14 +130,25 @@ def testOrdTree() =
   //   .move(`ω^`(w)).move(-`ω^`(w))
   //   .move(-1).set(8).move(-w).move(-1).move(w).move(1).v)
 
-  val n2 = OrdTree[String]()
+  
   val ww = `ω^`(w)
   val www = `ω^`(ww)
+
+  val n2 = OrdTree[String]().set("A")
+    // .set("A").move(1).set("B").move(w).set("C").move(-1).set("D").move(ww).set("E")
+    // .move(1).set("A2")
+    .move(ww).set("B")
+    // .move(-w*w).set("C")
+    // .move(w).set("E")
+    
+
+  draw(n2)
   // draw(n2.set("A").move(w).set("B").move(1).set("C"))
   // draw(n2.set("A").move(1).set("B").move(w).set("C"))
   // draw(n2.set("A").move(w).set("B").move(w*w).set("C").move(w*w*w).set("D").move(ww).set("E"))
-  draw(n2.set("A").move(w).set("B").move(w*w).set("C").move(ww).set("E"))
+  // draw(n2.set("A").move(ww).set("B").move(-w*w).set("C").move(w).set("E"))
   // draw(n2.set("A").move(w).set("B").move(1).set("C").move(ww).set("E"))
+  // println(n2.set("A").move(1).set("B").move(w).set("C").move(-1).v)
 
 
 // neato out/*.dot -n -Tpng -O
@@ -150,15 +161,16 @@ def draw(n: OrdTree[String]) =
   def line(x: String) = 
     pw.write(x + "\n")
   line("digraph G {")
-  line("  splines=true;")
   line("  node [shape=circle, style=filled, label=\"\"];")
+  // line("  splines=true;")
+  line("  outputorder=\"edgesfirst\";")
 
   var _id = 0
   def id() = {_id += 1; _id}
 
   def point(x: Int = 0, y: Int = 0, z: Int = 0, label: String = "", color: String = "white"): Point = 
     val name = s"n_${id()}"
-    line(s"  $name [pos=\"${x*50-z*25},${y*50}!\", label=\"$label\", fillcolor=$color];")
+    line(s"  $name [pos=\"${x*150-z*25},${y*50+z}!\", label=\"$label\", fillcolor=$color];")
     // line(s"  $name [pos=\"${y*50},${z*50}!\", label=\"$label\", fillcolor=$color];")    // rotated for now
     // line(s"  $name [pos=\"${-z*50},${y*50}!\", label=\"$label\", fillcolor=$color];")    // rotated for now
     return Point(name, x, y, z)
@@ -166,6 +178,23 @@ def draw(n: OrdTree[String]) =
   def edge(x: Point, y: Point) = 
     line(s"  ${x.s} -> ${y.s};")
     x
+
+  def yPaths(n: Node[String]): Set[String] = 
+    def up(n: Node[String], path: String = ""): Set[String] = n match
+      case OrdTree(l, _) => up(l, "1") + ""
+      case OTNone() => if path.charAt(path.length-1) == '0' then Set(path+"0"*(path.count(_=='1')-path.count(_=='0'))) else Set()
+      case Trie(l, r) => up(l, path + '1') ++ up(r, path + '0')
+      case Zipper(l, r) => (l++r).map(down(_, path)).fold(Set(path))(_++_)
+
+    def down(rstack: List[Node[String]], path: String): Set[String] = rstack match
+      case Nil => Set()
+      case n :: ns => Set()
+        val truncate = path.slice(0, path.lastIndexOf('1'))
+        up(n, truncate+'0') ++ down(ns, truncate)
+
+    up(n)
+
+  println(yPaths(n).toList.sorted.zipWithIndex.map((x, i) => (x -> i)).toMap)
     
 
   var _xmax = 0
@@ -177,23 +206,26 @@ def draw(n: OrdTree[String]) =
 
 
     
-  def f(n: Node[String]): Option[Point] =
+  def up(n: Node[String], rstack: List[Int] = Nil): Option[Point] =
     val hash = n.hashCode()
-    println(s"$hash\t<- $n")
+    // println(s"$hash\t<- $n")
     val ret = n match
       case OrdTree(l, v) => 
         val label = v.getOrElse("")
         val color = "orange"
-        f(l) match
+        up(l) match
           case Some(pl) => Some(edge(point(0, pl.y-1, pl.z-1, label=label, color=color), pl))
           case None => Some(point(0, ymin(), 0, label=label, color=color))
       case OTNone() => None
-      case Zipper(l, r) => Some(point(0, ymin(), 0, color="pink"))
+      case Zipper(l, r) => 
+        val p = point(0, ymin(), 0, color="pink")
+        over(l, p, 1) ++ over(r, p, -1)
+        Some(p)
       case Trie(l, r) => 
         val color = "teal"
         // go left first but priotritize right for placement
-        val pl = f(l)
-        f(r) match
+        val pl = up(l)
+        up(r) match
           case Some(pr) => 
             val p = edge(point(0, pr.y-1, pr.z+1, color=color), pr)
             pl match
@@ -204,25 +236,29 @@ def draw(n: OrdTree[String]) =
               case Some(pl) => Some(edge(point(0, pl.y-1, pl.z-1, color=color), pl))
               case None => None
         
-    println(s"$hash\t-> $ret")
+    // println(s"$hash\t-> $ret")
     ret
-    
 
-    // n.l match
-    // case OrdTree(OTNone(), v) => 
-    //   val x = xmax()
-    //   val y = ymax()
-    //   val name = node(x, y, 0, v.getOrElse(""), "red")
-      // edge(node(label=n.v.getOrElse("")), node(0, 1, 1, color="red"))
-    // val y = 0
-    // def findYs(n: OrdTree[String]): List[Int] = n match
-    //   case OrdTree(OTNone(), _) => Nil
-    //   case OrdTree(Trie(l, r), _) => findYs(l) ++ findYs(r)
-    // edge(point(label=n.v.getOrElse("")), point(0, 1, 1, color="red"))
+  def over[T](lol: List[List[Node[T]]], p: Point, d: Int): List[Point] = lol match
+    case Nil => Nil
+    case x :: xs => 
+      val p2 = point(p.x + d, p.y, p.z, color="yellow")
+      edge(p, p2) :: over(xs, p2, d)
+      down(x, p2)
 
-  // def 
+  def down[T](stack: List[Node[T]], p: Point): List[Point] = stack match
+    case Nil => Nil
+    case x :: xs => 
+      val color = x match
+        case Trie(l, r) => "teal"
+        case Zipper(l, r) => "pink"
+        case OrdTree(l, v) => "orange"
+        case OTNone() => "gray"
+      
+      val p2 = point(p.x, p.y-1, p.z, color=color)
+      edge(p, p2) :: down(xs, p2)
 
-  f(n)
+  up(n)
   line("}")
   pw.close
   
