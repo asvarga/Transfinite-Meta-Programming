@@ -137,7 +137,8 @@ def testOrdTree() =
 
   val n2 = OrdTree[String]().set("A")
     // .set("A").move(1).set("B").move(w).set("C").move(-1).set("D").move(ww).set("E")
-    .move(-1).set("B")
+    .move(-w).set("B")
+    .move(-1).set("Z")
     .move(ww).set("C")
     .move(-w*w).set("D")
     .move(w).set("E")
@@ -184,7 +185,7 @@ def draw(n: OrdTree[String]) =
     line(s"  ${x.s} -> ${y.s};")
     x
 
-  def depth(path: String) = path.count(_=='1')-path.count(_=='0')
+  def depth(path: String) = path.count(_!='0')-path.count(_=='0')
 
   def paths(n: Node[String]): (Map[String, Int], Map[String, Int]) = 
     var xs = mutable.Set[String]()
@@ -233,39 +234,34 @@ def draw(n: OrdTree[String]) =
     val d = depth(path)
     ys.get(path+"0"*d).get*2 - d
 
-  // var _xmax = 0
-  // def xmax() = {_xmax += 1; _xmax}
-  // var _xmin = 0
-  // def xmin() = {_xmin -= 1; _xmin}
-  // var _ymin = 0
-  // def ymin() = {_ymin -= 2; _ymin}
-
-
+  def getx(total: String) = 
+    val d = depth(total)
+    xs.get(total+"0"*d+"1").get
     
   def up(n: Node[String], path: String = "", total: String = ""): Option[Point] =
     val hash = n.hashCode()
     // println(s"$hash\t<- $n")
     val ret = n match
       case OrdTree(l, v) => 
-        val p = point(xs.get(total+"1").get, label=v.getOrElse(""), color="orange")
+        val p = point(getx(total), label=v.getOrElse(""), color="orange")
         up(l, "1") match
           case Some(pl) => Some(edge(p, pl))
           case None => Some(p)
       case OTNone() => None
       case Trie(l, r) => 
-        up(r, path+'0') match
+        up(r, path+'0', total) match
           case Some(pr) => 
             val p = edge(point(pr.x, gety(path), pr.z+1, color="teal"), pr)
-            up(l, path+'1') match
+            up(l, path+'1', total) match
               case Some(pl) => Some(edge(p, pl))
               case None => Some(p)
           case None =>
-            up(l, path+'1') match
+            up(l, path+'1', total) match
               case Some(pl) => Some(edge(point(pl.x, gety(path), pl.z-1, color="teal"), pl))
               case None => None
       case Zipper(l, r) => 
         // val p = point(0, ymin(), 0, color="pink")
-        val p = point(xs.get(total+"1").get, gety(path), 0, color="pink")
+        val p = point(getx(total), gety(path), 0, color="pink")
         // over(l, p, 1) ++ over(r, p, -1)
         val lpath = path.map(_ match {case '0'=>'0'; case '1'=>'2'})
         val rpath = path.map(_ match {case '0'=>'2'; case '1'=>'0'})
@@ -284,35 +280,28 @@ def draw(n: OrdTree[String]) =
             case None => {}
 
         Some(p)
-
-        
     // println(s"$hash\t-> $ret")
     ret
 
-  // def over[T](lol: List[List[Node[T]]], p: Point, d: Int): List[Point] = lol match
-  //   case Nil => Nil
-  //   case x :: xs => 
-  //     val p2 = point(p.x + d, p.y, p.z, color="yellow")
-  //     edge(p, p2) :: over(xs, p2, d)
-  //     down(x, p2)
 
   def down(stack: List[Node[String]], path: String, total: String): Option[Point] =
     def down(stack: List[Node[String]], path: String, total: String): Option[Point] = stack match
-      case (n@OrdTree(_, _)) :: _ => up(n, "0", total)
-      case n :: ns => 
-        val truncate = path.slice(0, path.lastIndexOf('1'))
-        val p2 = point(xs.get(total+'1').get, gety(truncate), depth(truncate), color="gray")
-        // println((n, path, truncate))
-        down(ns, truncate, total) match
-          case Some(p) => Some(edge(p2, p))
-          case None => None
-        up(n, truncate+'0', total) match
-          case Some(p) => Some(edge(p2, p))
-          case None => None
-        Some(p2)
+      case n :: ns => n match
+        case OrdTree(_, _) => up(n, "0", total)
+        case _ =>
+          val truncate = path.slice(0, path.lastIndexOf('1'))
+          println((path, truncate+'0', total, n))
+          val p2 = point(getx(total), gety(truncate), depth(truncate), color="gray")
+          down(ns, truncate, total) match
+            case Some(p) => Some(edge(p2, p))
+            case None => None
+          up(n, truncate+'0', total) match
+            case Some(p) => Some(edge(p2, p))
+            case None => None
+          Some(p2)
       case _ => None
     down(stack, path, total) match 
-      case Some(p) => Some(edge(point(xs.get(total+'1').get, gety(path), depth(path), color="yellow"), p))
+      case Some(p) => Some(edge(point(getx(total), gety(path), depth(path), color="yellow"), p))
       case None => None
       
       // edge(p, p2) :: down(ns, p2)
