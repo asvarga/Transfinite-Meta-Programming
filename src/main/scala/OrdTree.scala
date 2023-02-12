@@ -137,9 +137,9 @@ def testOrdTree() =
 
   val n2 = OrdTree[String]().set("A")
     // .set("A").move(1).set("B").move(w).set("C").move(-1).set("D").move(ww).set("E")
-    .move(1).set("A2")
-    .move(ww).set("B")
-    .move(-w*w).set("C")
+    .move(-1).set("B")
+    .move(ww).set("C")
+    .move(-w*w).set("D")
     .move(w).set("E")
     
 
@@ -180,6 +180,8 @@ def draw(n: OrdTree[String]) =
     line(s"  ${x.s} -> ${y.s};")
     x
 
+  def depth(path: String) = path.count(_=='1')-path.count(_=='0')
+
   def paths(n: Node[String]): (Map[String, Int], Map[String, Int]) = 
     var xs = mutable.Set[String]()
     var ys = mutable.Set[String]()
@@ -187,26 +189,26 @@ def draw(n: OrdTree[String]) =
     def up(n: Node[String], path: String = "", total: String = ""): Unit = n match
       case OrdTree(l, _) => 
         ys += ""
-        xs += ""
+        xs += "1"
         up(l, "1")
       case OTNone() => 
-        if path.charAt(path.length-1) == '0' then ys += path+"0"*(path.count(_=='1')-path.count(_=='0'))
+        if path.charAt(path.length-1) == '0' then ys += path+"0"*depth(path)
       case Trie(l, r) => 
         up(l, path + '1', total)
         up(r, path + '0', total)
       case Zipper(l, r) => 
         ys += path
-        xs += total+path
-        val nath = path.map(_ match {case '0'=>'1'; case '1'=>'0'}) // '0'+'1'-_
+        val lpath = path.map(_ match {case '0'=>'0'; case '1'=>'2'})
+        val rpath = path.map(_ match {case '0'=>'2'; case '1'=>'0'})
         var tot = total
         for n <- l do
-          tot += path
-          xs += tot
+          tot += lpath
+          xs += tot+'1'
           down(n, path, tot)
         tot = total
         for n <- r do 
-          tot += nath
-          xs += tot
+          tot += rpath
+          xs += tot+'1'
           down(n, path, tot)
 
     def down(rstack: List[Node[String]], path: String, total: String = ""): Unit = rstack match
@@ -222,68 +224,92 @@ def draw(n: OrdTree[String]) =
   val (xs, ys) = paths(n)
   println(xs)
   println(ys)
+
+  def gety(path: String) = 
+    val d = depth(path)
+    ys.get(path+"0"*d).get*2 - d
+
+  // var _xmax = 0
+  // def xmax() = {_xmax += 1; _xmax}
+  // var _xmin = 0
+  // def xmin() = {_xmin -= 1; _xmin}
+  // var _ymin = 0
+  // def ymin() = {_ymin -= 2; _ymin}
+
+
     
-
-  var _xmax = 0
-  def xmax() = {_xmax += 1; _xmax}
-  var _xmin = 0
-  def xmin() = {_xmin -= 1; _xmin}
-  var _ymin = 0
-  def ymin() = {_ymin -= 2; _ymin}
-
-
-    
-  def up(n: Node[String], rstack: List[Int] = Nil): Option[Point] =
+  def up(n: Node[String], path: String = "", total: String = ""): Option[Point] =
     val hash = n.hashCode()
     // println(s"$hash\t<- $n")
     val ret = n match
       case OrdTree(l, v) => 
-        val label = v.getOrElse("")
-        val color = "orange"
-        up(l) match
-          case Some(pl) => Some(edge(point(0, pl.y-1, pl.z-1, label=label, color=color), pl))
-          case None => Some(point(0, ymin(), 0, label=label, color=color))
+        val p = point(xs.get(total+"1").get, label=v.getOrElse(""), color="orange")
+        up(l, "1") match
+          case Some(pl) => Some(edge(p, pl))
+          case None => Some(p)
       case OTNone() => None
-      case Zipper(l, r) => 
-        val p = point(0, ymin(), 0, color="pink")
-        over(l, p, 1) ++ over(r, p, -1)
-        Some(p)
       case Trie(l, r) => 
-        val color = "teal"
-        // go left first but priotritize right for placement
-        val pl = up(l)
-        up(r) match
+        up(r, path+'0') match
           case Some(pr) => 
-            val p = edge(point(0, pr.y-1, pr.z+1, color=color), pr)
-            pl match
+            val p = edge(point(pr.x, gety(path), pr.z+1, color="teal"), pr)
+            up(l, path+'1') match
               case Some(pl) => Some(edge(p, pl))
               case None => Some(p)
           case None =>
-            pl match
-              case Some(pl) => Some(edge(point(0, pl.y-1, pl.z-1, color=color), pl))
+            up(l, path+'1') match
+              case Some(pl) => Some(edge(point(pl.x, gety(path), pl.z-1, color="teal"), pl))
               case None => None
+      case Zipper(l, r) => 
+        // val p = point(0, ymin(), 0, color="pink")
+        val p = point(xs.get(total+"1").get, gety(path), 0, color="pink")
+        // over(l, p, 1) ++ over(r, p, -1)
+        val lpath = path.map(_ match {case '0'=>'0'; case '1'=>'2'})
+        val rpath = path.map(_ match {case '0'=>'2'; case '1'=>'0'})
+        var tot = total
+        var p2 = p
+        for n <- l do
+          tot += lpath
+          down(n, path, tot) match
+            case Some(pl) => p2 = edge(p2, pl)
+            case None => {}
+        tot = total
+        for n <- r do 
+          tot += rpath
+          down(n, path, tot) match
+            case Some(pr) => p2 = edge(p2, pr)
+            case None => {}
+
+        Some(p)
+
         
     // println(s"$hash\t-> $ret")
     ret
 
-  def over[T](lol: List[List[Node[T]]], p: Point, d: Int): List[Point] = lol match
-    case Nil => Nil
-    case x :: xs => 
-      val p2 = point(p.x + d, p.y, p.z, color="yellow")
-      edge(p, p2) :: over(xs, p2, d)
-      down(x, p2)
+  // def over[T](lol: List[List[Node[T]]], p: Point, d: Int): List[Point] = lol match
+  //   case Nil => Nil
+  //   case x :: xs => 
+  //     val p2 = point(p.x + d, p.y, p.z, color="yellow")
+  //     edge(p, p2) :: over(xs, p2, d)
+  //     down(x, p2)
 
-  def down[T](stack: List[Node[T]], p: Point): List[Point] = stack match
-    case Nil => Nil
-    case x :: xs => 
-      val color = x match
-        case Trie(l, r) => "teal"
-        case Zipper(l, r) => "pink"
-        case OrdTree(l, v) => "orange"
-        case OTNone() => "gray"
+  def down(stack: List[Node[String]], path: String, total: String): Option[Point] = stack match
+    case n :: ns => 
+      println(n)
+      val p2 = point(xs.get(total+'1').get, gety(path), depth(path), color="gray")
+      val truncate = path.slice(0, path.lastIndexOf('1'))
+
+      down(ns, truncate, total) match
+        case Some(p) => Some(edge(p2, p))
+        case None => None
+      up(n, truncate+'0', total) match
+        case Some(p) => Some(edge(p2, p))
+        case None => None
+
+
+      Some(p2)
+    case _ => None
       
-      val p2 = point(p.x, p.y-1, p.z, color=color)
-      edge(p, p2) :: down(xs, p2)
+      // edge(p, p2) :: down(ns, p2)
 
   up(n)
   line("}")
@@ -294,8 +320,8 @@ def draw(n: OrdTree[String]) =
 
 /*
 TODO:
+  - draw
   - test
   - use in interpreter as env
   - write it up
-
 */
