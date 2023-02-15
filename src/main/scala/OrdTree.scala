@@ -146,6 +146,7 @@ def testOrdTree() =
     .move(-1).set("G")
     // .move(w*w
     .move(1)
+    // .move(-ww)
     
 
   draw(n2)
@@ -203,16 +204,15 @@ def draw(n: OrdTree[String]) =
         up(r, path + '0', total)
       case Zipper(l, r) => 
         ys += path
-        val lpath = path.map(_ match {case '0'=>'0'; case '1'=>'2'})
-        val rpath = path.map(_ match {case '0'=>'2'; case '1'=>'0'})
+        val nath = path.map(_ match {case '0'=>'1'; case '1'=>'0'})
         var tot = total
         for n <- l do
-          tot += lpath
+          tot += path
           xs += tot+'1'
           down(n, path, tot)
         tot = total
         for n <- r do 
-          tot += rpath
+          tot += nath
           xs += tot+'1'
           down(n, path, tot)
 
@@ -263,18 +263,17 @@ def draw(n: OrdTree[String]) =
         // val p = point(0, ymin(), 0, color="pink")
         val p = point(getx(total), gety(path), 0, color="pink")
         // over(l, p, 1) ++ over(r, p, -1)
-        val lpath = path.map(_ match {case '0'=>'0'; case '1'=>'2'})
-        val rpath = path.map(_ match {case '0'=>'2'; case '1'=>'0'})
+        val nath = path.map(_ match {case '0'=>'1'; case '1'=>'0'})
         var tot = total
         var p2 = p
         for n <- l do
-          tot += lpath
+          tot += path
           down(n, path, tot) match
             case Some(pl) => p2 = edge(p2, pl)
             case None => {}
         tot = total
         for n <- r do 
-          tot += rpath
+          tot += nath
           down(n, path, tot) match
             case Some(pr) => p2 = edge(p2, pr)
             case None => {}
