@@ -137,16 +137,24 @@ def testOrdTree() =
 
   val n2 = OrdTree[String]().set("A")
     // .set("A").move(1).set("B").move(w).set("C").move(-1).set("D").move(ww).set("E")
-    .move(-w).set("B")
-    .move(-1).set("Z")
-    .move(ww).set("C")
-    .move(-w*w).set("D")
-    .move(w).set("E")
-    .move(-1).set("F")
-    .move(-1).set("G")
+    .move(-w).set("B").move(-w).set("B")
+    .move(-1).set("Z").move(-1).set("Z")
+    .move(ww).set("C").move(ww).set("C")
+    .move(-w*w).set("D").move(-w*w).set("D")
+    .move(w).set("E").move(w).set("E")
+    .move(-1).set("F").move(-1).set("F")
+    .move(-1).set("G").move(-1).set("G")
     // .move(w*w
-    .move(1)
-    // .move(-ww)
+    .move(1).move(1)
+    .move(-ww)
+    .move(-1)
+    .move(-w)
+    // .move(-1)
+    .move(-w*w)
+    .move(-w)
+    .move(-1)
+    .move(-www)
+    .move(-w*w*w)
     
 
   draw(n2)
@@ -169,15 +177,17 @@ def draw(n: OrdTree[String]) =
     pw.write(x + "\n")
   line("digraph G {")
   line("  node [shape=circle, style=filled, label=\"\"];")
+  line("  edge [arrowsize=0.8];")
   // line("  splines=true;")
   line("  outputorder=\"edgesfirst\";")
+  // line("  outputorder=\"nodesfirst\";")
 
   var _id = 0
   def id() = {_id += 1; _id}
 
   def point(x: Int = 0, y: Int = 0, z: Int = 0, label: String = "", color: String = "white", shape: String = "circle"): Point = 
     val name = s"n_${id()}"
-    line(s"  $name [pos=\"${x*150-z*25},${y*50}!\", label=\"$label\", fillcolor=$color, shape=$shape];")
+    line(s"  $name [pos=\"${x*50-z*25},${y*50}!\", label=\"$label\", fillcolor=$color, shape=$shape];")
     // line(s"  $name [pos=\"${y*50},${z*50}!\", label=\"$label\", fillcolor=$color];")    // rotated for now
     // line(s"  $name [pos=\"${-z*50},${y*50}!\", label=\"$label\", fillcolor=$color];")    // rotated for now
     return Point(name, x, y, z)
@@ -236,7 +246,7 @@ def draw(n: OrdTree[String]) =
 
   def getx(total: String) = 
     val d = depth(total)
-    xs.get(total+"0"*d+"1").get
+    xs.get(total+"0"*d+"1").get*2
     
   def up(n: Node[String], path: String = "", total: String = ""): Option[Point] =
     val hash = n.hashCode()
@@ -269,13 +279,14 @@ def draw(n: OrdTree[String]) =
         for n <- l do
           tot += path
           down(n, path, tot) match
-            case Some(pl) => p2 = edge(p2, pl)
+            case Some(pl) => edge(p2, pl); p2 = pl
             case None => {}
         tot = total
+        p2 = p
         for n <- r do 
           tot += nath
           down(n, path, tot) match
-            case Some(pr) => p2 = edge(p2, pr)
+            case Some(pr) => edge(p2, pr); p2 = pr
             case None => {}
 
         Some(p)
