@@ -135,26 +135,27 @@ def testOrdTree() =
   val ww = `ω^`(w)
   val www = `ω^`(ww)
 
-  val n2 = OrdTree[String]().set("A")
+  val n2 = OrdTree[String]()
+    // .set("A")
     // .set("A").move(1).set("B").move(w).set("C").move(-1).set("D").move(ww).set("E")
-    .move(-w).set("B").move(-w).set("B")
-    .move(-1).set("Z").move(-1).set("Z")
-    .move(ww).set("C").move(ww).set("C")
-    .move(-w*w).set("D").move(-w*w).set("D")
-    .move(w).set("E").move(w).set("E")
-    .move(-1).set("F").move(-1).set("F")
-    .move(-1).set("G").move(-1).set("G")
+    .move(-w)//.set("B")//.move(-w).set("B")
+    .move(-1)//.set("Z")//.move(-1).set("Z")
+    .move(ww)//.set("C")//.move(ww).set("C")
+    .move(-w*w)//.set("D")//.move(-w*w).set("D")
+    .move(w)//.set("E")//.move(w).set("E")
+    .move(-1)//.set("F")//.move(-1).set("F")
+    .move(-1)//.set("G")//.move(-1).set("G")
     // .move(w*w
-    .move(1).move(1)
-    .move(-ww)
-    .move(-1)
-    .move(-w)
+    .move(1)//.move(1)
+    // .move(-ww)
     // .move(-1)
-    .move(-w*w)
-    .move(-w)
-    .move(-1)
-    .move(-www)
-    .move(-w*w*w)
+    // .move(-w)
+    // .move(-1)
+    // .move(-w*w)
+    // .move(-w)
+    // .move(-1)
+    // .move(-www)
+    // .move(-w*w*w)
     
 
   draw(n2)
@@ -169,6 +170,14 @@ def testOrdTree() =
 // neato out/*.dot -n -Tpng -O
 def draw(n: OrdTree[String]) =
 
+  val WHITE = "#E0FBFC"
+  val GREEN = "#59B36E"
+  val BLUE = "#2E86AB"
+  val ORANGE = "#EF7B45"
+  val LIGHT_PINK = "#D87CAC"
+  val DARK_PINK = "#BD4089"
+
+
   case class Point(s: String = "", x: Int = 0, y: Int = 0, z: Int = 0)
 
   import java.io._
@@ -176,6 +185,7 @@ def draw(n: OrdTree[String]) =
   def line(x: String) = 
     pw.write(x + "\n")
   line("digraph G {")
+  line(s"  bgcolor=\"$WHITE\"")
   line("  node [shape=circle, style=filled, label=\"\"];")
   line("  edge [arrowsize=0.8];")
   // line("  splines=true;")
@@ -185,9 +195,9 @@ def draw(n: OrdTree[String]) =
   var _id = 0
   def id() = {_id += 1; _id}
 
-  def point(x: Int = 0, y: Int = 0, z: Int = 0, label: String = "", color: String = "white", shape: String = "circle"): Point = 
+  def point(x: Int = 0, y: Int = 0, z: Int = 0, label: String = "", color: String = "white", shape: String = "circle", orientation: Int = 0): Point = 
     val name = s"n_${id()}"
-    line(s"  $name [pos=\"${x*50-z*25},${y*50}!\", label=\"$label\", fillcolor=$color, shape=$shape];")
+    line(s"  $name [pos=\"${x*50-z*25},${y*50}!\", label=\"$label\", fillcolor=\"$color\", shape=$shape, orientation=$orientation];")
     // line(s"  $name [pos=\"${y*50},${z*50}!\", label=\"$label\", fillcolor=$color];")    // rotated for now
     // line(s"  $name [pos=\"${-z*50},${y*50}!\", label=\"$label\", fillcolor=$color];")    // rotated for now
     return Point(name, x, y, z)
@@ -253,7 +263,7 @@ def draw(n: OrdTree[String]) =
     // println(s"$hash\t<- $n")
     val ret = n match
       case OrdTree(l, v) => 
-        val p = point(getx(total), label=v.getOrElse(""), color="orange", shape=if total == "" then "doublecircle" else "circle")
+        val p = point(getx(total), label=v.getOrElse(""), color=ORANGE, shape=if total == "" then "house" else "cylinder")
         up(l, "1") match
           case Some(pl) => Some(edge(p, pl))
           case None => Some(p)
@@ -261,17 +271,16 @@ def draw(n: OrdTree[String]) =
       case Trie(l, r) => 
         up(r, path+'0', total) match
           case Some(pr) => 
-            val p = edge(point(pr.x, gety(path), pr.z+1, color="teal"), pr)
+            val p = edge(point(pr.x, gety(path), pr.z+1, color=GREEN), pr)
             up(l, path+'1', total) match
               case Some(pl) => Some(edge(p, pl))
               case None => Some(p)
           case None =>
             up(l, path+'1', total) match
-              case Some(pl) => Some(edge(point(pl.x, gety(path), pl.z-1, color="teal"), pl))
+              case Some(pl) => Some(edge(point(pl.x, gety(path), pl.z-1, color=GREEN), pl))
               case None => None
       case Zipper(l, r) => 
-        // val p = point(0, ymin(), 0, color="pink")
-        val p = point(getx(total), gety(path), 0, color="pink")
+        val p = point(getx(total), gety(path), 0, color=DARK_PINK, shape="square", orientation=45)
         // over(l, p, 1) ++ over(r, p, -1)
         val nath = path.map(_ match {case '0'=>'1'; case '1'=>'0'})
         var tot = total
@@ -301,7 +310,7 @@ def draw(n: OrdTree[String]) =
         case _ =>
           val truncate = path.slice(0, path.lastIndexOf('1'))
           println((path, truncate+'0', total, n))
-          val p2 = point(getx(total), gety(truncate), depth(truncate), color="gray")
+          val p2 = point(getx(total), gety(truncate), depth(truncate), color=BLUE, shape="Mcircle")
           down(ns, truncate, total) match
             case Some(p) => Some(edge(p2, p))
             case None => None
@@ -311,7 +320,7 @@ def draw(n: OrdTree[String]) =
           Some(p2)
       case _ => None
     down(stack, path, total) match 
-      case Some(p) => Some(edge(point(getx(total), gety(path), depth(path), color="yellow"), p))
+      case Some(p) => Some(edge(point(getx(total), gety(path), depth(path), color=LIGHT_PINK, shape="square", orientation=45), p))
       case None => None
       
       // edge(p, p2) :: down(ns, p2)
