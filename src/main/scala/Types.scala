@@ -13,6 +13,8 @@ import scala.collection.immutable.ListMap
 import scala.collection.mutable.Map
 import spire.math.Natural
 
+import ordtree.*
+
 /// Types ///
 
 type Sym = String
@@ -217,6 +219,13 @@ object DEnv:
   def head(using denv: DEnv): (Val, Val) = denv.head._2
   def level(using denv: DEnv): Ordinal = denv.level
   def isLevelZero(using denv: DEnv): Boolean = denv.isLevelZero
+
+type ZEnv = OrdTree[(Sym, (Val, Val))]
+def lookup(zenv: ZEnv, s: Sym): (Val, Val) = throw Exception("TODO")
+object ZEnv:
+  def empty: ZEnv = OrdTree()
+  def current(using zenv: ZEnv): ZEnv = zenv
+  // ...
 
 class Code(tc: Term):
   val t: Term = tc match
