@@ -135,30 +135,89 @@ def testOrdTree() =
   val ww = `ω^`(w)
   val www = `ω^`(ww)
 
-  val n2 = OrdTree[String]()
-    // .set("A")
-    // .set("A").move(1).set("B").move(w).set("C").move(-1).set("D").move(ww).set("E")
-    .move(-w)//.set("B")//.move(-w).set("B")
-    .move(-1)//.set("Z")//.move(-1).set("Z")
-    .move(ww)//.set("C")//.move(ww).set("C")
-    .move(-w*w)//.set("D")//.move(-w*w).set("D")
-    .move(w)//.set("E")//.move(w).set("E")
-    .move(-1)//.set("F")//.move(-1).set("F")
-    .move(-1)//.set("G")//.move(-1).set("G")
-    // .move(w*w
-    .move(1)//.move(1)
-    // .move(-ww)
-    // .move(-1)
-    // .move(-w)
-    // .move(-1)
-    // .move(-w*w)
-    // .move(-w)
-    // .move(-1)
-    // .move(-www)
-    // .move(-w*w*w)
-    
+  // val n2 = OrdTree[String]()
+  //   // .set("A")
+  //   // .set("A").move(1).set("B").move(w).set("C").move(-1).set("D").move(ww).set("E")
+  //   .move(-w)//.set("B")//.move(-w).set("B")
+  //   .move(-1)//.set("Z")//.move(-1).set("Z")
+  //   .move(ww)//.set("C")//.move(ww).set("C")
+  //   .move(-w*w)//.set("D")//.move(-w*w).set("D")
+  //   .move(w)//.set("E")//.move(w).set("E")
+  //   .move(-1)//.set("F")//.move(-1).set("F")
+  //   .move(-1)//.set("G")//.move(-1).set("G")
+  //   // .move(w*w
+  //   .move(1)//.move(1)
+  //   // .move(-ww)
+  //   // .move(-1)
+  //   // .move(-w)
+  //   // .move(-1)
+  //   // .move(-w*w)
+  //   // .move(-w)
+  //   // .move(-1)
+  //   // .move(-www)
+  //   // .move(-w*w*w)
+  // draw(n2)
 
-  draw(n2)
+  val T1 = OrdTree().set("A")
+    .move(-1).set("B")
+    .move(-1).set("C")
+    .move(-1).set("D")
+  draw(T1, "local/T1.dot")
+
+  val T2 = T1.move(1)
+  draw(T2, "local/T2.dot")
+
+  val T3 = T2.move(1)
+  draw(T3, "local/T3.dot")
+
+  val T4 = T3.move(-w).set("E")
+  draw(T4, "local/T4.dot")
+
+  val T5 = T4.move(-1).set("F")
+    .move(-1).set("G")
+    .move(1)
+  draw(T5, "local/T5.dot")
+
+  val T6 = T5.move(w)
+  draw(T6, "local/T6.dot")
+
+  val T7 = T6.move(-1)
+    .move(-w)
+  draw(T7, "local/T7.dot")
+
+  val T8 = T7.move(-w*w).set("H")
+  draw(T8, "local/T8.dot")
+
+  val T9 = T8.move(w*w)
+  draw(T9, "local/T9.dot")
+
+  val T10 = T9.move(-ww).set("I")
+  draw(T10, "local/T10.dot")
+
+  val T11 = T10.move(ww)
+  draw(T11, "local/T11.dot")
+
+
+  def foo(t: OrdTree[String], o: Ordinal) = t
+    .move(o).move(-o)
+    // .move(-o).move(o)
+
+  //`ω^`(
+  var S = OrdTree[String]()
+  S = foo(S, 1)
+  S = foo(S, w)
+  S = foo(S, `ω^`(2))
+  S = foo(S, `ω^`(3))
+  S = foo(S, `ω^`(w))
+  S = foo(S, `ω^`(w+1))
+  S = foo(S, `ω^`(w*2))
+  S = foo(S, `ω^`(w*w))
+  S = foo(S, www)
+  S = foo(S, `ω^`(`ω^`(w+1)))
+  S = foo(S, `ω^`(`ω^`(w)+1))
+  draw(S, "local/S.dot")
+
+
   // draw(n2.set("A").move(w).set("B").move(1).set("C"))
   // draw(n2.set("A").move(1).set("B").move(w).set("C"))
   // draw(n2.set("A").move(w).set("B").move(w*w).set("C").move(w*w*w).set("D").move(ww).set("E"))
@@ -168,7 +227,7 @@ def testOrdTree() =
 
 
 // neato out/*.dot -n -Tpng -O
-def draw(n: OrdTree[String]) =
+def draw(n: OrdTree[String], filename: String = "local/Z.dot") =
 
   val WHITE = "#E0FBFC"
   val GREEN = "#59B36E"
@@ -181,14 +240,14 @@ def draw(n: OrdTree[String]) =
   case class Point(s: String = "", x: Int = 0, y: Int = 0, z: Int = 0)
 
   import java.io._
-  val pw = new PrintWriter(new File("local/Z.dot" ))
+  val pw = new PrintWriter(new File(filename))
   def line(x: String) = 
     pw.write(x + "\n")
   line("digraph G {")
   line(s"  bgcolor=\"$WHITE\"")
   line("  node [shape=circle, style=filled, label=\"\"];")
   line("  edge [arrowsize=0.8];")
-  // line("  splines=true;")
+  line("  splines=true;")
   line("  outputorder=\"edgesfirst\";")
   // line("  outputorder=\"nodesfirst\";")
 
